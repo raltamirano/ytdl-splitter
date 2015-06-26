@@ -1,13 +1,11 @@
 var youtubedl = require('youtube-dl');
-
+var handlerFile = require('./handlerMP3File/handler-file.js');
 if (process.argv.length < 3)
 	throw 'At least, you must specify the URL of the video to download/split!';
 
+
 var url = process.argv[2];
 console.log('Video URL: ' + url);
-
-
-
 
 // ----------------------------------------------------------- TEST ----------------------------------------------------------------
 // Test video URL: https://www.youtube.com/watch?v=GRxofEmo3HA
@@ -22,19 +20,14 @@ var testDescription = "From Rayle47:\n" +
 var testMP3File = '/home/rodrigo/all/temp/Four Seasons ~ Vivaldi-GRxofEmo3HA.mp3';
 
 
-
-
 // Let's analyze the video's description trying to extract a tracklist from it.
-var tracklist = extractTracklist(testDescription);
-if (tracklist == 'undefined' || tracklist.length <= 0)
+var tracklist = handlerFile.extractTracklist(testDescription);
+if (!tracklist  || tracklist.length <= 0)
 	throw 'No tracklist could be inferred/read!';
-splitMP3FileByTracklist(testMP3File, tracklist);
+handlerFile.splitMP3FileByTracklist(testMP3File, tracklist);
 
 process.exit(1);
 // ----------------------------------------------------------- TEST ----------------------------------------------------------------
-
-
-
 
 // Optional arguments passed to youtube-dl. 
 // var options = ['--username=user', '--password=hunter2'];
@@ -59,20 +52,7 @@ youtubedl.getInfo(url, options, function(err, info) {
 });
 
 
-function extractTracklist(videoDescription) {
-	var tracklist = [];
 
-	// TODO: extract tracklist from video's description.
-	// I'm thinking on some kind of 'chain-of-responsibility' for handlers that could 
-	// actually extract songs's title and start/stop markers. 
-	tracklist.push({ "title": "1st song", "start": 0, "end": 192 });
-	tracklist.push({ "title": "2nd song", "start": 195, "end": 402 });
-	tracklist.push({ "title": "3rd song", "start": 404, "end": 721 });
 
-	return tracklist;
-}
 
-function splitMP3FileByTracklist(file, tracklist) {
-	console.log('TODO: splitMP3FileByTracklist: \nFile: \n' + file + "\n\nTracklist: \n" + JSON.stringify(tracklist));
-}
 
