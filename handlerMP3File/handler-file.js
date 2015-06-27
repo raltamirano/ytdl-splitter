@@ -1,3 +1,4 @@
+var sox = require('sox');
 var ChainOfResponsibility = require('chaining-tool');
 
 exports.extractTracklistAnalyzers = new ChainOfResponsibility();
@@ -11,8 +12,8 @@ exports.extractTracklistAnalyzers.add(function(context, next) {
 	var TIME_MODE_DURATION = 'd';
  	var regex = /(.+)\s(\d{1,2}:\d{2})\s*/gi; 
 
-	var match, title, time, time_mode, index = 0;
-	while (match = regex.exec(context.videoDescription)) {
+	var match, title, time, timeMode, index = 0;
+	while (match = regex.exec(context.description)) {
 		title = match[1];
 		time = momentToMillis(match[2]);
 
@@ -38,7 +39,12 @@ exports.extractTracklistAnalyzers.add(function(context, next) {
 		index++;
 	}
 
+
 	if (index > 0) {  // Tracks were found!	
+		// In TIME_MODE_START, complete the 'end' of the last song is the duration for the video.
+		if (timeMode == TIME_MODE_START)
+			context.tracklist.tracks[context.tracklist.tracks.length-1].end = context.duration;
+
 		context.tracklist.analyzer = ANALYZER_NAME;		
 		next(false); // Finish the analysis
 	} else {
@@ -52,9 +58,10 @@ exports.extractTracklistAnalyzers.add(function(context, next) {
  
 
 // Method to extract a tracklist given the description of the video to split.
-exports.extractTracklist = function(videoDescription) {
+exports.extractTracklist = function(description, duration) {
+	var durationInMillis = momentToMillis(duration); 
     var tracklist = { "analyzer": null, "tracks": [] };
-	var context = { "videoDescription": videoDescription, "tracklist": tracklist };
+	var context = { "description": description, "duration": durationInMillis, "tracklist": tracklist };
 
 	exports.extractTracklistAnalyzers.start(context, function(context) {
 		return context.tracklist;
@@ -66,7 +73,7 @@ exports.extractTracklist = function(videoDescription) {
 };
 
 exports.splitMP3FileByTracklist = function(file, tracklist) {
-    console.log('TODO: splitMP3FileByTracklist: \nFile: \n' + file + "\n\nTracklist: \n" + JSON.stringify(tracklist));
+    console.log("Splitting file '" + file + "' using tracklist: \n" + JSON.stringify(tracklist, null, 2));
 };
 
 function momentToMillis(input) {

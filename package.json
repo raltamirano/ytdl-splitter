@@ -26,6 +26,7 @@
   "homepage": "https://github.com/raltamirano/ytdl-splitter#readme",
   "dependencies": {
     "chaining-tool": "0.0.4",
+    "sox": "^0.1.0",
     "youtube-dl": "^1.10.5"
   }
 }
