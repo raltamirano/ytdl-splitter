@@ -22,7 +22,7 @@ var testMP3File = '/home/rodrigo/all/temp/Four Seasons ~ Vivaldi-GRxofEmo3HA.mp3
 
 // Let's analyze the video's description trying to extract a tracklist from it.
 var tracklist = handlerFile.extractTracklist(testDescription);
-if (!tracklist  || tracklist.length <= 0)
+if (!tracklist || !tracklist.tracks || tracklist.tracks.length <= 0)
 	throw 'No tracklist could be inferred/read!';
 handlerFile.splitMP3FileByTracklist(testMP3File, tracklist);
 
@@ -50,9 +50,4 @@ youtubedl.getInfo(url, options, function(err, info) {
   //    4. When the MP3 file is ready, analyze then split it with the tracklist we got.
 
 });
-
-
-
-
-
 
