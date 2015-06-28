@@ -1,4 +1,5 @@
-var sox = require('sox');
+var avconv = require('avconv');
+var path = require('path');
 var ChainOfResponsibility = require('chaining-tool');
 
 exports.extractTracklistAnalyzers = new ChainOfResponsibility();
@@ -14,8 +15,8 @@ exports.extractTracklistAnalyzers.add(function(context, next) {
 
 	var match, title, time, timeMode, index = 0;
 	while (match = regex.exec(context.description)) {
-		title = match[1];
-		time = momentToMillis(match[2]);
+		title = match[1].trim();
+		time = momentToSeconds(match[2]);
 
 		if (index == 0)
 			timeMode = match[2].match(/0+:0+/) ? TIME_MODE_START : TIME_MODE_DURATION;
@@ -58,25 +59,102 @@ exports.extractTracklistAnalyzers.add(function(context, next) {
  
 
 // Method to extract a tracklist given the description of the video to split.
-exports.extractTracklist = function(description, duration) {
-	var durationInMillis = momentToMillis(duration); 
-    var tracklist = { "analyzer": null, "tracks": [] };
-	var context = { "description": description, "duration": durationInMillis, "tracklist": tracklist };
+exports.extractTracklist = function(description, duration, callback) {
+	var durationInSecs = momentToSeconds(duration); 
+    var tracklist = new Tracklist();
+	var context = { "description": description, "duration": durationInSecs, "tracklist": tracklist };
 
 	exports.extractTracklistAnalyzers.start(context, function(context) {
-		return context.tracklist;
+		if (callback)
+			callback(context.tracklist);
 	}, function(context) {
-		return context.tracklist;
+		if (callback)
+			callback(context.tracklist);
+	});
+};
+
+exports.splitFileByTracklist = function(file, tracklist, callback) {
+    console.log("Splitting file '" + file + "' using tracklist: \n" + JSON.stringify(tracklist, null, 2));
+    if (path.extname(file).toLowerCase() != '.mp3')
+		convertToMP3(file, function(conversionReturnCode, outputFile) {
+			if (conversionReturnCode != 0)
+				process.exit(conversionReturnCode);
+			else
+				splitMP3FileByTracklist(outputFile, tracklist, callback);
+		});	
+	else
+		splitMP3FileByTracklist(file, tracklist, callback);		
+};
+
+var Tracklist = function() {
+	this.analyzer = '';
+	this.tracks = [];
+};
+
+Tracklist.prototype.allTracksAreNumbered = function() {
+	for(var index=0; index<this.tracks.length; index++) 
+		if (!(/^[0-9]/.test(this.tracks[index].title)))
+			return false;
+	return true;
+};
+
+exports.Tracklist = Tracklist;
+
+function momentToSeconds(input) {
+	var parts = input.split(':');
+	return ((parseInt(parts[0]) * 60) + parseInt(parts[1]));
+}
+
+function convertToMP3(file, callback) {
+	var params = [];
+	var outputFile = file + '.mp3';
+    params.push('-i');
+    params.push(file.replace(/ /g, "\ "));
+	params.push('-vn');
+	params.push('-qscale');
+	params.push('1');
+	params.push(outputFile.replace(/ /g, "\ "));
+
+	var stream = avconv(params);
+
+    stream.on('message', function(data) {
+		console.log('MP3 conversion -> ' + data);
 	});
 
-    return tracklist;
-};
+	stream.once('exit', function(exitCode, signal, metadata) {
+         if (callback)
+             callback(exitCode, outputFile);
+    });
+}
 
-exports.splitMP3FileByTracklist = function(file, tracklist) {
-    console.log("Splitting file '" + file + "' using tracklist: \n" + JSON.stringify(tracklist, null, 2));
-};
+function splitMP3FileByTracklist(file, tracklist, callback) {
+    var params = [];
+    params.push('-i');
+    params.push(file.replace(/ /g, "\ "));
+    params.push('-acodec');
+    params.push('copy');
 
-function momentToMillis(input) {
-	var parts = input.split(':');
-	return ((parseInt(parts[0]) * 60) + parseInt(parts[1])) * 1000;
+    var prevStart = 0;
+    var allTracksAreNumbered = tracklist.allTracksAreNumbered();
+    for(var index=0; index < tracklist.tracks.length; index++) {
+        filename = (allTracksAreNumbered ? "" : ("00" + (index+1)).slice(-2) + '.') + tracklist.tracks[index].title.replace(/[^a-z0-9\.]/gi, '_') + '.mp3';
+
+        params.push('-ss');
+        params.push(tracklist.tracks[index].start.toString());
+        params.push('-t');
+        params.push((tracklist.tracks[index].end - prevStart).toString());
+        params.push(path.join(path.dirname(file), filename));
+
+        prevStart = tracklist.tracks[index].end;
+    }
+    var stream = avconv(params);
+
+    stream.on('message', function(data) {
+        console.log('Split by tracklist -> ' + data);
+    });
+
+    stream.once('exit', function(exitCode, signal, metadata) {
+        if (callback)
+            callback(exitCode);
+    });
 }
