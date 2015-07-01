@@ -1,3 +1,4 @@
+var fs = require('fs');
 var avconv = require('avconv');
 var path = require('path');
 var ChainOfResponsibility = require('chaining-tool');
@@ -6,20 +7,18 @@ exports.extractTracklistAnalyzers = new ChainOfResponsibility();
 
 // Add built-in tracklist analyzers.
 exports.extractTracklistAnalyzers.add(function(context, next) {
-	// For songs expressed as something like: 'song-name XX:YY', where 'XX:YY' are
-	// the starting minutes:seconds of 'song-name'.
 	var ANALYZER_NAME = 'ANALYZER-1';
 	var TIME_MODE_START = 's';
 	var TIME_MODE_DURATION = 'd';
- 	var regex = /(.+)\s(\d{1,2}:\d{2})\s*/gi; 
+	var regex = /(.*?)((\d{1,2}:\d{1,2})(.{0,5}(\d{1,2}:\d{1,2}))?)(.*)/gi;
 
 	var match, title, time, timeMode, index = 0;
 	while (match = regex.exec(context.description)) {
-		title = match[1].trim();
-		time = momentToSeconds(match[2]);
+		title = (match[1] + match[6]).trim().replace(/^[\-\s\:]*/, '');
+		time = momentToSeconds(match[3].trim());
 
 		if (index == 0)
-			timeMode = match[2].match(/0+:0+/) ? TIME_MODE_START : TIME_MODE_DURATION;
+			timeMode = (time == 0) ? TIME_MODE_START : TIME_MODE_DURATION;
 
 		if (timeMode == TIME_MODE_START) {			
 			start = time
@@ -77,6 +76,8 @@ exports.splitFileByTracklist = function(file, tracklist, callback) {
     console.log("Splitting file '" + file + "' using tracklist: \n" + JSON.stringify(tracklist, null, 2));
     if (path.extname(file).toLowerCase() != '.mp3')
 		convertToMP3(file, function(conversionReturnCode, outputFile) {
+			fs.unlink(file);
+
 			if (conversionReturnCode != 0)
 				process.exit(conversionReturnCode);
 			else
@@ -154,6 +155,8 @@ function splitMP3FileByTracklist(file, tracklist, callback) {
     });
 
     stream.once('exit', function(exitCode, signal, metadata) {
+		fs.unlink(file);
+
         if (callback)
             callback(exitCode);
     });

@@ -21,7 +21,9 @@ youtubedl.getInfo(url, options, function(err, info) {
 				throw 'No tracklist could be inferred/read!';
 
 		var video = new youtubedl(url);
-		var inputFile = path.join(os.tmpdir(), info._filename);
+		var inputFileRoot = path.join(os.tmpdir(), info._filename);
+		fs.mkdirSync(inputFileRoot);
+		var inputFile = path.join(inputFileRoot, info._filename);
 
 		video.pipe(fs.createWriteStream(inputFile));
 
