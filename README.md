@@ -5,8 +5,4 @@ Utility to download youtube videos as separate audio files, using the tracklist 
 
   `nodejs index.js <video_url>`
 
-  Example:
-  
-  `nodejs index.js https://www.youtube.com/watch?v=nnk1HTsmJk0`
-
 
