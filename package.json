@@ -1,7 +1,7 @@
 {
   "name": "ytdl-splitter",
-  "version": "1.0.3",
-  "description": "Utility to download youtube videos (using youtube-dl) as separate audio files, using the tracklist provided on the description of the video (and maybe other sources, in the future)",
+  "version": "1.0.4",
+  "description": "Utility to download youtube videos (using youtube-dl) as separate audio files, using the tracklist provided on the description of the video or CUE files",
   "main": "index.js",
   "scripts": {
     "test": "exit 0"
@@ -16,7 +16,8 @@
     "download",
     "mp3",
     "audio",
-    "split"
+    "split",
+    "cue"
   ],
   "author": "Rodrigo Altamirano <rodrigo.altamirano@gmail.com> (https://github.com/raltamirano)",
   "license": "MIT",

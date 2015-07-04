@@ -1,10 +1,15 @@
 # ytdl-splitter
-Utility to download youtube videos as separate audio files, using the tracklist provided on the description of the video, and maybe other sources.
+Utility to download youtube videos (using youtube-dl) as separate audio files, using the tracklist provided on the description of the video or CUE files.
 
 ## Usage
 
-  `nodejs index.js <video_url>`
+    Extract audio files using the tracklist provided in the description for the video:
 
+        `nodejs index.js <video_url>`
+
+    Extract audio files using a CUE file as the tracklist:
+
+        `nodejs index.js --cue-file tracklist.cue  <video_url>`
 
 ## Notes
 
