@@ -27,6 +27,8 @@
   "dependencies": {
     "avconv": "^3.0.1",
     "chaining-tool": "0.0.4",
+    "commander": "^2.8.1",
+    "cue-parser": "0.0.3",
     "youtube-dl": "^1.10.5"
   }
 }

@@ -2,21 +2,39 @@ var fs = require('fs');
 var os = require('os');
 var path = require('path');
 var youtubedl = require('youtube-dl');
-var handlerFile = require('./handlerMP3File/handler-file.js');
+var core = require('./handlerMP3File/handler-file.js');
+var program = require('commander');
+var cueParser  = require('cue-parser');
 
-if (process.argv.length < 3)
+program
+  .option('-c, --cue-file [file]', 'Use the specified .CUE file as the tracklist')
+  .parse(process.argv);
+
+if (program.args.length != 1)
 	throw 'At least, you must specify the URL of the video to download/split!';
 
-var url = process.argv[2];
+if (program.cueFile)
+    core.addCUETracklistExtractor(program.cueFile);
+
+var url = program.args[0];
 console.log('Video URL: ' + url);
 
 var options = [];
 youtubedl.getInfo(url, options, function(err, info) {
 	if (err) throw err;
 
-	// Let's analyze the video's description trying to extract a tracklist from it,
+	// Let's somehow extract a tracklist from the video information we got,
 	// then extract each song as a separate audio file.
-	handlerFile.extractTracklist(info.description, info.duration, function(tracklist) {
+    var videoContext = {
+        "description": info.description,
+        "duration": info.duration,
+        "durationInSecs": core.momentToSeconds(info.duration)
+    };
+
+    if (program.cueFile)
+        videoContext.cueFile = program.cueFile;
+
+	core.extractTracklist(videoContext, function(tracklist) {
 		if (!tracklist || !tracklist.tracks || tracklist.tracks.length <= 0)
 				throw 'No tracklist could be inferred/read!';
 
@@ -28,11 +46,11 @@ youtubedl.getInfo(url, options, function(err, info) {
 		video.pipe(fs.createWriteStream(inputFile));
 
 		video.on('end', function() {
-			handlerFile.splitFileByTracklist(inputFile, tracklist, function(returnCode) {
+			core.splitFileByTracklist(inputFile, tracklist, function(returnCode) {
 				console.log('Finished!');
 				process.exit(returnCode);
 			});
 		});
 	});
-});
 
+});
