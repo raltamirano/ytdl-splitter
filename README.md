@@ -14,7 +14,7 @@ Extract audio files using a CUE file as the tracklist:
 
 You can also set values for some metadata fields (overwritting values read from any tracklist source, if any):
 
-    nodejs index.js -t="The Album" -a="The Artist" -y="2015" <video_url>
+    nodejs index.js -t "The Album" -a "The Artist" -y "2015" <video_url>
 
 ## Notes
 
