@@ -2,6 +2,7 @@ var fs = require('fs');
 var avconv = require('avconv');
 var path = require('path');
 var ChainOfResponsibility = require('chaining-tool');
+var cueParser  = require('cue-parser');
 
 exports.tracklistExtractors = new ChainOfResponsibility();
 
@@ -12,7 +13,7 @@ exports.tracklistExtractors.add(function(context, next) {
 	var TIME_MODE_DURATION = 'd';
 	var regex = /(.*?)((\d{1,2}:\d{1,2})(.{0,5}(\d{1,2}:\d{1,2}))?)(.*)/gi;
 
-	console.log('Extractor "', EXTRACTOR_NAME, '" starting...');
+	console.log('Extractor "' + EXTRACTOR_NAME + '" starting...');
 
 	var match, title, time, timeMode, index = 0;
 	while (match = regex.exec(context.videoContext.description)) {
@@ -60,6 +61,9 @@ exports.addCUETracklistExtractor = function(cueFile) {
 		console.log('Extractor "' + EXTRACTOR_NAME + '" starting...');
 
 		var cueSheet = cueParser.parse(cueFile);
+
+		context.tracklist.artistName = cueSheet.performer;
+		context.tracklist.albumName = cueSheet.title;
 
 		var start = 0;
 		for(var index = 0; index < cueSheet.files[0].tracks.length; index++) {
@@ -112,6 +116,9 @@ exports.splitFileByTracklist = function(file, tracklist, callback) {
 };
 
 var Tracklist = function() {
+	this.albumName = '';
+	this.albumYear = 0;
+	this.artistName = '';
 	this.extractor = '';
 	this.tracks = [];
 };
@@ -169,6 +176,20 @@ function splitMP3FileByTracklist(file, tracklist, callback) {
 
 		params.push('-acodec');
 	    params.push('copy');
+
+ 		params.push('-metadata');
+		params.push('title=' + tracklist.tracks[index].title);
+		params.push('-metadata');
+		params.push('track=' + (index+1));
+		params.push('-metadata');
+		params.push('album=' + tracklist.albumName);
+		params.push('-metadata');
+		params.push('author=' + tracklist.artistName);
+		if (tracklist.albumYear != 0) {
+			params.push('-metadata');
+			params.push('date=' + tracklist.albumYear);			
+		}
+
 
         params.push('-ss');
         params.push(tracklist.tracks[index].start.toString());

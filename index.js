@@ -4,14 +4,17 @@ var path = require('path');
 var youtubedl = require('youtube-dl');
 var core = require('./handlerMP3File/handler-file.js');
 var program = require('commander');
-var cueParser  = require('cue-parser');
 
 program
-  .option('-c, --cue-file [file]', 'Use the specified .CUE file as the tracklist')
-  .parse(process.argv);
+    .usage('[options] <video_url>')
+    .option('-c, --cue-file [file]', 'Use the specified .CUE file as the tracklist')
+    .option('-t, --album-name [album name]', 'Album name')
+    .option('-a, --album-artist [album artist]', 'Album artist(s)')
+    .option('-y, --album-year [album year]', 'Album year')
+    .parse(process.argv);
 
 if (program.args.length != 1)
-	throw 'At least, you must specify the URL of the video to download/split!';
+	throw 'You must specify the URL of the video to download/split only!';
 
 if (program.cueFile)
     core.addCUETracklistExtractor(program.cueFile);
@@ -33,10 +36,23 @@ youtubedl.getInfo(url, options, function(err, info) {
 
     if (program.cueFile)
         videoContext.cueFile = program.cueFile;
+    if (program.albumName)
+        videoContext.albumName = program.albumName;
+    if (program.artistName)
+        videoContext.artistName = program.artistName;
+    if (program.albumYear)
+        videoContext.albumYear = program.albumYear;
 
 	core.extractTracklist(videoContext, function(tracklist) {
 		if (!tracklist || !tracklist.tracks || tracklist.tracks.length <= 0)
 				throw 'No tracklist could be inferred/read!';
+
+        if (videoContext.albumName != undefined)
+            tracklist.albumName = videoContext.albumName;
+        if (videoContext.artistName != undefined)
+            tracklist.artistName = videoContext.artistName;
+        if (videoContext.albumYear != undefined)
+            tracklist.albumYear = videoContext.albumYear;
 
 		var video = new youtubedl(url);
 		var inputFileRoot = path.join(os.tmpdir(), info._filename);
