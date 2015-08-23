@@ -1,9 +1,11 @@
+var fs = require('fs');
 var program = require('commander');
 var Splitter = require('ytdl-splitter-core');
 
 program
     .usage('[options] <video_url>')
     .option('-c, --cue-file [file]', 'Use the specified .CUE file as the tracklist')
+    .option('-d, --tracklist-data [file]', 'Use the specified text file as the source for tracklist extraction')
     .option('-t, --album-name [album name]', 'Album name')
     .option('-a, --artist-name [artist name]', 'Album artist(s)')
     .option('-y, --album-year [album year]', 'Album year')
@@ -37,9 +39,14 @@ splitter.on('error', function(error) {
 });
 
 
+if (program.cueFile && program.tracklistData)
+	throw 'You should use either "--cue-file [file]" or "--tracklist-data" options but not both!';
+
 if (program.cueFile)
     splitter.addCUETracklistExtractor(program.cueFile);
 
+if (program.tracklistData)
+	options.tracklistData = fs.readFileSync(program.tracklistData, 'utf8');
 if (program.albumName)
     options.albumName = program.albumName;
 if (program.artistName)

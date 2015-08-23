@@ -1,6 +1,6 @@
 {
   "name": "ytdl-splitter",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "Utility to download youtube videos (using youtube-dl) as separate audio files, using the tracklist provided on the description of the video or CUE files",
   "main": "index.js",
   "scripts": {
@@ -28,6 +28,6 @@
   "homepage": "https://github.com/raltamirano/ytdl-splitter#readme",
   "dependencies": {
     "commander": "^2.8.1",
-    "ytdl-splitter-core": "^1.0.2"
+    "ytdl-splitter-core": "^1.0.3"
   }
 }
